@@ -16,3 +16,6 @@ Bot replies to every incoming webhook and doesn't send requests to the API direc
 - Rename `sample_app.yaml` to `app.yaml` and replace `yourappid` with your App engine app id and `YOUR_TELEGRAM_BOT_TOKEN` with your bot token 
 - Possibly you'll want to create your own channel and your bot as an admin. Also change `@hacker_news_feed` in `database.py` to your channel id
 - Run `appcfg.py update .` in the project folder
+
+## See also 
+- [asciifacesbot](https://github.com/phil-r/asciifacesbot)

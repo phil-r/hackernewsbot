@@ -1,0 +1,4 @@
+cron:
+- description: check top stories
+  url: /cron
+  schedule: every 10 minutes synchronized

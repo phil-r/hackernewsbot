@@ -28,9 +28,10 @@ def call_method(method, data):
     return None
 
 
-def send_message(chat_id, text, parse_mode='HTML'):
+def send_message(chat_id, text, parse_mode='HTML', disable_notification=True):
   return call_method('sendMessage', {
       'chat_id': chat_id,
       'text': text,
-      'parse_mode': parse_mode
+      'parse_mode': parse_mode,
+      'disable_notification': disable_notification
   })

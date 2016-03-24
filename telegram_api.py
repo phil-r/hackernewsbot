@@ -28,7 +28,7 @@ def call_method(method, data):
     return None
 
 
-def send_message(chat_id, text, parse_mode='Markdown'):
+def send_message(chat_id, text, parse_mode='HTML'):
   return call_method('sendMessage', {
       'chat_id': chat_id,
       'text': text,

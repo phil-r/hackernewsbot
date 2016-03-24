@@ -29,17 +29,16 @@ class StoryPost(ndb.Model):
     story['title'] = story.get('title').encode('utf-8')
 
     hn_url = "https://news.ycombinator.com/item?id={}".format(story_id)
-    # Add title
-    if story.get('url'):
-      message = '[{title}]({url})\n'.format(**story)
-    else:
+    if not story.get('url'):
       story['url'] = hn_url
-      message = '[{title}]({url})\n'.format(**story)
+
+    # Add title
+    message = '<a href="{url})">{title}</a>\n'.format(**story)
     # Add current score
-    message += "*Score:* {}+\n".format(story.get('score'))
+    message += "<b>Score:</b> {}+\n".format(story.get('score'))
     # Add comments Link
-    message += "[Comments:]({}) {}+\n".format(hn_url,
-                                              story.get('descendants', 0))
+    message += '<a href="{}">Comments:</a> {}+\n'.format(hn_url,
+                                                  story.get('descendants', 0))
     # Add text
     text = story.get('text')
     if text:

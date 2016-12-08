@@ -3,9 +3,8 @@ import logging
 from google.appengine.ext import ndb
 from google.appengine.api import memcache
 
-from helper import development
-from telegram_api import send_message
-from url_shortener_api import shorten_url
+from helper import development, shorten_url
+from apis.telegram import send_message
 
 
 class StoryPost(ndb.Model):
@@ -32,9 +31,9 @@ class StoryPost(ndb.Model):
     story['title'] = story.get('title').encode('utf-8')
 
     hn_url = "https://news.ycombinator.com/item?id={}".format(story_id)
-    short_hn_url = shorten_url(hn_url).get('id')
+    short_hn_url = shorten_url(hn_url)
     if story.get('url'):
-      short_url = shorten_url(story.get('url')).get('id')
+      short_url = shorten_url(story.get('url'))
     else:
       short_url = short_hn_url
       story['url'] = hn_url

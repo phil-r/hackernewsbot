@@ -6,7 +6,6 @@ from google.appengine.ext import deferred
 
 from flask import Flask
 from apis.hn import topstories, item_async
-from apis.telegram import send_message
 from database import StoryPost
 
 app = Flask(__name__)

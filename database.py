@@ -32,19 +32,27 @@ class StoryPost(ndb.Model):
 
     hn_url = "https://news.ycombinator.com/item?id={}".format(story_id)
     short_hn_url = shorten_url(hn_url)
+    buttons = []
+
     if story.get('url'):
       short_url = shorten_url(story.get('url'))
+      buttons.append({
+        'text': 'Read',
+        'url': story.get('url')
+      })
     else:
       short_url = short_hn_url
       story['url'] = hn_url
+
+    buttons.append({
+      'text': '{}+ Comments'.format(story.get('descendants', 0)),
+      'url': hn_url
+    })
 
     # Add title
     message = '<b>{title}</b> (Score: {score}+)\n\n'.format(**story)
     # Add link
     message += '<b>Link:</b> {}\n'.format(short_url)
-    # Add comments Link
-    message += '<b>{}+ Comments:</b> {}\n'.format(story.get('descendants', 0),
-                                                  short_hn_url)
     # Add text
     text = story.get('text')
     if text:
@@ -53,7 +61,8 @@ class StoryPost(ndb.Model):
       message += "\n{}\n".format(text)
 
     if development():
-      result = send_message('@hacker_news_feed_st', message)
+      result = send_message('@hacker_news_feed_st', message,
+                            {'inline_keyboard': [buttons]})
     else:
       result = send_message('@hacker_news_feed', message)
     if result:

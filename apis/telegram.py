@@ -11,13 +11,14 @@ TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 
 
 def call_method(method, data):
-  form_data = urllib.urlencode(data)
+  data = json.dumps(data)
   try:
     result = urlfetch.fetch(
         BASE_URL.format(token=TOKEN, method=method),
-        payload=form_data,
+        payload=data,
         method=urlfetch.POST,
-        deadline=10)
+        deadline=10,
+        headers={'Content-Type': 'application/json'})
   except DeadlineExceededError as e:
     logging.exception(e)
     return None
@@ -28,10 +29,12 @@ def call_method(method, data):
     return None
 
 
-def send_message(chat_id, text, parse_mode='HTML', disable_notification=True):
+def send_message(chat_id, text, reply_markup=None, parse_mode='HTML',
+                 disable_notification=True):
   return call_method('sendMessage', {
       'chat_id': chat_id,
       'text': text,
       'parse_mode': parse_mode,
-      'disable_notification': disable_notification
+      'disable_notification': disable_notification,
+      'reply_markup': reply_markup
   })

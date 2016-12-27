@@ -64,7 +64,8 @@ class StoryPost(ndb.Model):
       result = send_message('@hacker_news_feed_st', message,
                             {'inline_keyboard': [buttons]})
     else:
-      result = send_message('@hacker_news_feed', message)
+      result = send_message('@hacker_news_feed', message,
+                            {'inline_keyboard': [buttons]})
     if result:
       cls(id=story_id, title=story.get('title'), url=story.get('url'),
           score=story.get('score'), text=story.get('text'),

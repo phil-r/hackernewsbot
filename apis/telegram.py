@@ -31,10 +31,14 @@ def call_method(method, data):
 
 def send_message(chat_id, text, reply_markup=None, parse_mode='HTML',
                  disable_notification=True):
-  return call_method('sendMessage', {
-      'chat_id': chat_id,
-      'text': text,
-      'parse_mode': parse_mode,
-      'disable_notification': disable_notification,
-      'reply_markup': reply_markup
-  })
+  message = {
+    'chat_id': chat_id,
+    'text': text,
+    'parse_mode': parse_mode,
+    'disable_notification': disable_notification
+  }
+
+  if reply_markup:
+      message['reply_markup'] = reply_markup
+
+  return call_method('sendMessage', message)

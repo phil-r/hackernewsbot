@@ -18,7 +18,7 @@ Bot uses [bit.ly](https://dev.bitly.com/) and [goo.gl](https://developers.google
 ## How to run your own `hackernewsbot`
 - Clone this project
 - Run `pip install -r requirements.txt -t lib/` to install dependencies
-- Download and install [App Engine SDK](https://cloud.google.com/appengine/downloads)
+- Download and install [Google Cloud SDK](https://cloud.google.com/appengine/docs/standard/python/download)
 - Register your app in [Google Cloud console](https://console.cloud.google.com)
 - Register your bot via [BotFather](https://telegram.me/BotFather)
 - Rename `sample_app.yaml` to `app.yaml` and
@@ -27,7 +27,7 @@ Bot uses [bit.ly](https://dev.bitly.com/) and [goo.gl](https://developers.google
   - replace `YOUR_GOOGLE_API_TOKEN` with your google api token (used for url shortening)
   - replace `YOUR_BITLY_API_TOKEN` with your bitly access token (used for url shortening)
 - Possibly you'll want to create your own channel and your bot as an admin. Also change `@hacker_news_feed` in `database.py` to your channel id
-- Run `appcfg.py update .` in the project folder
+- Run `gcloud app deploy app.yaml --project [YOUR_PROJECT_NAME]` in the project folder
 
 ## See also
 - [asciifacesbot](https://github.com/phil-r/asciifacesbot)

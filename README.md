@@ -29,5 +29,13 @@ Bot uses [bit.ly](https://dev.bitly.com/) and [goo.gl](https://developers.google
 - Possibly you'll want to create your own channel and your bot as an admin. Also change `@hacker_news_feed` in `database.py` to your channel id
 - Run `gcloud app deploy app.yaml --project [YOUR_PROJECT_NAME]` in the project folder
 
+## Local development
+To run server locally you can use [`dev_appserver.py`](https://cloud.google.com/appengine/docs/standard/python/tools/using-local-server):
+
+```
+dev_appserver.py .
+```
+
+
 ## See also
 - [asciifacesbot](https://github.com/phil-r/asciifacesbot)

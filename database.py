@@ -53,6 +53,9 @@ class StoryPost(ndb.Model):
     message = '<b>{title}</b> (Score: {score}+)\n\n'.format(**story)
     # Add link
     message += '<b>Link:</b> {}\n'.format(short_url)
+    # Add comments Link
+    message += '<b>{}+ Comments:</b> {}\n'.format(story.get('descendants', 0),
+                                                  short_hn_url)
     # Add text
     text = story.get('text')
     if text:

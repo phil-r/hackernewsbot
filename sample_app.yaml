@@ -7,6 +7,18 @@ libraries:
   version: latest
 
 handlers:
+- url: /
+  static_files: static/index.html
+  upload: static/index.html
+- url: /favicon.ico
+  static_files: static/favicon.ico
+  upload: static/favicon.ico
+- url: /robots.txt
+  static_files: static/robots.txt
+  upload: static/robots.txt
+- url: /cron
+  script: main.app
+  login: admin
 - url: .*
   script: main.app
 

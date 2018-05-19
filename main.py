@@ -12,11 +12,6 @@ from database import StoryPost
 app = Flask(__name__)
 
 
-@app.route('/')
-def hello():
-  """Return a friendly HTTP greeting."""
-  return "Hello!"
-
 @app.route('/s/<short_id>')
 def story_redirect(short_id):
   """Redirect to story url"""

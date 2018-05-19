@@ -1,9 +1,10 @@
 import logging
+import shortener
 
 from google.appengine.ext import ndb
 from google.appengine.api import memcache
 
-from helper import development, shorten_url
+from helper import development
 from apis.telegram import send_message
 
 
@@ -19,25 +20,37 @@ class StoryPost(ndb.Model):
 
   @classmethod
   def add(cls, story):
-    story_id = str(story.get('id'))
+    story_id_int = story.get('id')
+    story_id = str(story_id_int)
+    short_id = shortener.encode(story_id_int)
+    hn_url = "https://news.ycombinator.com/item?id={}".format(story_id)
+    has_url = 'url' in story
+    story_url = story.get('url', hn_url)
+
+    # Check memcache and databse, maybe this story was already sent
     if memcache.get(story_id):
       logging.info('STOP: {} in memcache'.format(story_id))
       return
     if ndb.Key(cls, story_id).get():
       logging.info('STOP: {} in DB'.format(story_id))
-      memcache.set(story_id, 1)
+      memcache.set(story_id, story_url)
       return
     logging.info('SEND: {}'.format(story_id))
-    story['title'] = story.get('title').encode('utf-8')
 
-    hn_url = "https://news.ycombinator.com/item?id={}".format(story_id)
-    short_hn_url = shorten_url(hn_url)
+    story['title'] = story.get('title').encode('utf-8')
     comments_count = story.get('descendants', 0)
-    story_url = story.get('url')
     buttons = []
 
-    if story_url:
-      short_url = shorten_url(story_url)
+    if development():
+      short_hn_url = 'http://localhost:8080/c/{}'.format(short_id)
+    else:
+      short_hn_url = 'https://readhacker.news/c/{}'.format(short_id)
+
+    if has_url:
+      if development():
+        short_url = 'http://localhost:8080/s/{}'.format(short_id)
+      else:
+        short_url = 'https://readhacker.news/s/{}'.format(short_id)
       buttons.append({
         'text': 'Read',
         'url': story_url
@@ -53,11 +66,14 @@ class StoryPost(ndb.Model):
 
     # Add title
     message = '<b>{title}</b> (Score: {score}+)\n\n'.format(**story)
+
     # Add link
     message += '<b>Link:</b> {}\n'.format(short_url)
+
     # Add comments Link(don't add it for `Ask HN`, etc)
-    if story_url:
+    if has_url:
       message += '<b>Comments:</b> {}\n'.format(short_hn_url)
+
     # Add text
     text = story.get('text')
     if text:
@@ -65,6 +81,7 @@ class StoryPost(ndb.Model):
                  .replace('&#x2F;', '/').encode('utf-8')
       message += "\n{}\n".format(text)
 
+    # Send to the telegram channel
     if development():
       result = send_message('@hacker_news_feed_st', message,
                             {'inline_keyboard': [buttons]})
@@ -75,4 +92,4 @@ class StoryPost(ndb.Model):
       cls(id=story_id, title=story.get('title'), url=story.get('url'),
           score=story.get('score'), text=story.get('text'),
           short_url=short_url, short_hn_url=short_hn_url).put()
-      memcache.set(story_id, 1)
+      memcache.set(story_id, story_url)

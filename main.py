@@ -1,10 +1,11 @@
 import json
 import logging
+import shortener
 
-from google.appengine.api import urlfetch
-from google.appengine.ext import deferred
+from google.appengine.api import urlfetch, memcache
+from google.appengine.ext import deferred, ndb
 
-from flask import Flask
+from flask import Flask, redirect
 from apis.hn import topstories, item_async
 from database import StoryPost
 
@@ -16,6 +17,22 @@ def hello():
   """Return a friendly HTTP greeting."""
   return "Hello!"
 
+@app.route('/s/<short_id>')
+def story_redirect(short_id):
+  """Redirect to story url"""
+  story_id = str(shortener.decode(short_id))
+  redirect_url = memcache.get(story_id)
+  if not redirect_url:
+    story = ndb.Key(StoryPost, story_id).get()
+    redirect_url = story.url
+  return redirect(redirect_url)
+
+@app.route('/c/<short_id>')
+def comments_redirect(short_id):
+  """Redirect to comments url"""
+  story_id = str(shortener.decode(short_id))
+  hn_url = "https://news.ycombinator.com/item?id={}".format(story_id)
+  return redirect(hn_url)
 
 def task(stories):
   def check_story(rpc):
@@ -26,7 +43,6 @@ def task(stories):
         StoryPost.add(story)
     except urlfetch.DownloadError as ex:
       logging.exception(ex)
-  #  TODO: don't fetch already loaded (>=150 score) stories
   rpcs = map(lambda id: item_async(id, check_story), stories)
   for rpc in rpcs:
     rpc.wait()

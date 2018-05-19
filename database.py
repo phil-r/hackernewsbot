@@ -1,5 +1,7 @@
 import logging
 import shortener
+import timeago
+import datetime
 
 from google.appengine.ext import ndb
 from google.appengine.api import memcache
@@ -64,8 +66,13 @@ class StoryPost(ndb.Model):
       'url': hn_url
     })
 
+    # Get the difference between published date and when 100+ score was reched
+    now = datetime.datetime.now()
+    published = datetime.datetime.fromtimestamp(story.get('time'))
+    ago = timeago.format(now, published)
+
     # Add title
-    message = '<b>{title}</b> (Score: {score}+)\n\n'.format(**story)
+    message = '<b>{title}</b> (Score: {score}+ {ago})\n\n'.format(ago=ago, **story)
 
     # Add link
     message += '<b>Link:</b> {}\n'.format(short_url)

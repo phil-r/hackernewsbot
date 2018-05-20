@@ -5,7 +5,7 @@ import shortener
 from google.appengine.api import urlfetch, memcache
 from google.appengine.ext import deferred, ndb
 
-from flask import Flask, redirect
+from flask import Flask, redirect, abort, make_response
 from apis.hn import topstories, item_async
 from database import StoryPost
 
@@ -15,19 +15,29 @@ app = Flask(__name__)
 @app.route('/s/<short_id>')
 def story_redirect(short_id):
   """Redirect to story url"""
-  story_id = str(shortener.decode(short_id))
+  try:
+    story_id = str(shortener.decode(short_id))
+  except:
+    return abort(400)
   redirect_url = memcache.get(story_id)
   if not redirect_url:
     story = ndb.Key(StoryPost, story_id).get()
+    if not story:
+      return make_response('<h1>Service Unavailable</h1><p>Try again later</p>', 503, {'Retry-After': 5})
     redirect_url = story.url
   return redirect(redirect_url)
+
 
 @app.route('/c/<short_id>')
 def comments_redirect(short_id):
   """Redirect to comments url"""
-  story_id = str(shortener.decode(short_id))
+  try:
+    story_id = str(shortener.decode(short_id))
+  except:
+    return abort(400)
   hn_url = "https://news.ycombinator.com/item?id={}".format(story_id)
   return redirect(hn_url)
+
 
 def task(stories):
   def check_story(rpc):

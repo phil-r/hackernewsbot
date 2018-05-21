@@ -47,6 +47,8 @@ def task(stories):
       story = json.loads(result.content)
       if story and story.get('score') >= 100:
         StoryPost.add(story)
+      else:
+        logging.info('STOP: {id} has low score ({score})'.format(**story))
     except urlfetch.DownloadError as ex:
       logging.exception(ex)
   rpcs = map(lambda id: item_async(id, check_story), stories)

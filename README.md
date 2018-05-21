@@ -13,7 +13,7 @@ It loads [top stories](https://hacker-news.firebaseio.com/v0/topstories.json) ev
 Bot uses [Telegram Bot API](https://core.telegram.org/bots/api) to post messages to the [telegram channel](https://telegram.me/hacker_news_feed) with [sendMessage](https://core.telegram.org/bots/api#sendmessage) request
 
 ## URL shortening
-Bot uses [bit.ly](https://dev.bitly.com/) and [goo.gl](https://developers.google.com/url-shortener/v1/getting_started) for url shortening
+Bot used [bit.ly](https://dev.bitly.com/) and [goo.gl](https://developers.google.com/url-shortener/v1/getting_started) for url shortening, but now it uses internal shortener
 
 ## How to run your own `hackernewsbot`
 - Clone this project

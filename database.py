@@ -22,22 +22,25 @@ class StoryPost(ndb.Model):
 
   created = ndb.DateTimeProperty(auto_now_add=True)
 
+  def add_memcache(self):
+    memcache.set(self.key.id(), self.url)
+
   @classmethod
   def add(cls, story):
     story_id_int = story.get('id')
     story_id = str(story_id_int)
     short_id = shortener.encode(story_id_int)
     hn_url = "https://news.ycombinator.com/item?id={}".format(story_id)
-    has_url = 'url' in story
-    story_url = story.get('url', hn_url)
+    story_url = story.get('url')
 
     # Check memcache and databse, maybe this story was already sent
     if memcache.get(story_id):
       logging.info('STOP: {} in memcache'.format(story_id))
       return
-    if ndb.Key(cls, story_id).get():
+    post = ndb.Key(cls, story_id).get()
+    if post:
       logging.info('STOP: {} in DB'.format(story_id))
-      memcache.set(story_id, story_url)
+      post.add_memcache()
       return
     logging.info('SEND: {}'.format(story_id))
 
@@ -50,7 +53,7 @@ class StoryPost(ndb.Model):
     else:
       short_hn_url = 'https://readhacker.news/c/{}'.format(short_id)
 
-    if has_url:
+    if story_url:
       if development():
         short_url = 'http://localhost:8080/s/{}'.format(short_id)
       else:
@@ -80,7 +83,7 @@ class StoryPost(ndb.Model):
     message += '<b>Link:</b> {}\n'.format(short_url)
 
     # Add comments Link(don't add it for `Ask HN`, etc)
-    if has_url:
+    if story_url:
       message += '<b>Comments:</b> {}\n'.format(short_hn_url)
 
     # Add text
@@ -103,9 +106,9 @@ class StoryPost(ndb.Model):
     telegram_message_id = None
     if result and result.get('ok'):
       telegram_message_id = result.get('result').get('message_id')
-
-    cls(id=story_id, title=story.get('title'), url=story.get('url'),
+    post = cls(id=story_id, title=story.get('title'), url=story.get('url'),
         score=story.get('score'), text=story.get('text'),
         short_url=short_url, short_hn_url=short_hn_url,
-        message=message, telegram_message_id=telegram_message_id).put()
-    memcache.set(story_id, story_url)
+        message=message, telegram_message_id=telegram_message_id)
+    post.put()
+    post.add_memcache()

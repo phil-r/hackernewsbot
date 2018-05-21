@@ -24,6 +24,7 @@ def story_redirect(short_id):
     story = ndb.Key(StoryPost, story_id).get()
     if not story:
       return make_response('<h1>Service Unavailable</h1><p>Try again later</p>', 503, {'Retry-After': 5})
+    story.add_memcache()
     redirect_url = story.url
   return redirect(redirect_url)
 

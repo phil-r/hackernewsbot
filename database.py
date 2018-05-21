@@ -13,10 +13,12 @@ from apis.telegram import send_message
 class StoryPost(ndb.Model):
   title = ndb.StringProperty()
   text = ndb.TextProperty()
+  message = ndb.TextProperty()
   url = ndb.TextProperty()
   short_url = ndb.TextProperty(indexed=False)
   short_hn_url = ndb.TextProperty(indexed=False)
   score = ndb.IntegerProperty(indexed=False)
+  telegram_message_id = ndb.IntegerProperty()
 
   created = ndb.DateTimeProperty(auto_now_add=True)
 
@@ -54,16 +56,16 @@ class StoryPost(ndb.Model):
       else:
         short_url = 'https://readhacker.news/s/{}'.format(short_id)
       buttons.append({
-        'text': 'Read',
-        'url': story_url
+          'text': 'Read',
+          'url': story_url
       })
     else:
       short_url = short_hn_url
       story['url'] = hn_url
 
     buttons.append({
-      'text': '{}+ Comments'.format(comments_count),
-      'url': hn_url
+        'text': '{}+ Comments'.format(comments_count),
+        'url': hn_url
     })
 
     # Get the difference between published date and when 100+ score was reched
@@ -95,8 +97,15 @@ class StoryPost(ndb.Model):
     else:
       result = send_message('@hacker_news_feed', message,
                             {'inline_keyboard': [buttons]})
-    if result:
-      cls(id=story_id, title=story.get('title'), url=story.get('url'),
-          score=story.get('score'), text=story.get('text'),
-          short_url=short_url, short_hn_url=short_hn_url).put()
-      memcache.set(story_id, story_url)
+
+    logging.info('Telegram response: {}'.format(result))
+
+    telegram_message_id = None
+    if result and result.get('ok'):
+      telegram_message_id = result.get('result').get('message_id')
+
+    cls(id=story_id, title=story.get('title'), url=story.get('url'),
+        score=story.get('score'), text=story.get('text'),
+        short_url=short_url, short_hn_url=short_hn_url,
+        message=message, telegram_message_id=telegram_message_id).put()
+    memcache.set(story_id, story_url)

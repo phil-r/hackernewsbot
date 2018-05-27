@@ -77,7 +77,7 @@ def chunkify(lst, n):
 def cron():
   stop_non_defualt_versions()
   stories = topstories()
-  chunks = chunkify(stories, 100)
+  chunks = chunkify(stories, 20)
   for chunk in chunks:
     deferred.defer(task, chunk)
   return 'OK'

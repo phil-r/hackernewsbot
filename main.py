@@ -51,6 +51,10 @@ def task(stories):
         logging.info('STOP: {id} has low score ({score})'.format(**story))
     except urlfetch.DownloadError as ex:
       logging.exception(ex)
+    except ValueError as ex:
+      logging.info(result.content)
+      logging.exception(ex)
+      
 
   # stringify ids for use in memcache and convert to set for later
   ids = set(str(story_id) for story_id in stories)

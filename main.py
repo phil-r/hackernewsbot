@@ -8,6 +8,7 @@ from google.appengine.ext import deferred, ndb
 from flask import Flask, redirect, abort, make_response
 from apis.hn import topstories, item_async
 from database import StoryPost
+from helper import stop_non_defualt_versions
 
 app = Flask(__name__)
 
@@ -54,7 +55,7 @@ def task(stories):
     except ValueError as ex:
       logging.info(result.content)
       logging.exception(ex)
-      
+
 
   # stringify ids for use in memcache and convert to set for later
   ids = set(str(story_id) for story_id in stories)
@@ -74,8 +75,9 @@ def chunkify(lst, n):
 
 @app.route('/cron')
 def cron():
+  stop_non_defualt_versions()
   stories = topstories()
-  chunks = chunkify(stories, 50)
+  chunks = chunkify(stories, 100)
   for chunk in chunks:
     deferred.defer(task, chunk)
   return 'OK'

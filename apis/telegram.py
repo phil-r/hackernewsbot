@@ -17,7 +17,7 @@ def call_method(method, data):
         BASE_URL.format(token=TOKEN, method=method),
         payload=data,
         method=urlfetch.POST,
-        deadline=15,
+        deadline=10,
         headers={'Content-Type': 'application/json'})
   except DeadlineExceededError as e:
     logging.exception(e)

@@ -58,6 +58,7 @@ def task(stories):
 
   # stringify ids for use in memcache and convert to set for later
   ids = set(str(story_id) for story_id in stories)
+  logging.info('checking stories: {}'.format(ids))
   # get stories that we already posted to reduce the number of requests
   cached_stories = set(memcache.get_multi(ids).keys())
   logging.info('cached stories: {}'.format(cached_stories))

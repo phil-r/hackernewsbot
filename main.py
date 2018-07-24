@@ -47,8 +47,10 @@ def task(stories):
       story = json.loads(result.content)
       if story and story.get('score') >= 100:
         StoryPost.add(story)
-      else:
+      elif story:
         logging.info('STOP: {id} has low score ({score})'.format(**story))
+      else:
+        logging.info('STOP: story was probably deleted/flagged')
     except urlfetch.DownloadError as ex:
       logging.exception(ex)
     except ValueError as ex:

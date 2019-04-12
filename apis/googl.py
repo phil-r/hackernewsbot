@@ -1,6 +1,5 @@
 import os
 import json
-import urllib
 import logging
 
 from google.appengine.api import urlfetch

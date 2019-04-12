@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import logging
 import shortener
 import timeago
@@ -9,6 +11,8 @@ from google.appengine.api import memcache
 from helper import development
 from apis.telegram import send_message
 
+TWO_HOURS = datetime.timedelta(hours=2)
+TWO_DAYS = datetime.timedelta(days=2)
 
 class StoryPost(ndb.Model):
   title = ndb.StringProperty()
@@ -76,8 +80,18 @@ class StoryPost(ndb.Model):
     published = datetime.datetime.fromtimestamp(story.get('time'))
     ago = timeago.format(now, published)
 
+    # Add 🔥 emoji if story is hot and gained required score in less than 2 hours,
+    # or add ❄️ if it took it more than 2 days
+    status_emoji = ''
+    delta = now - published
+    if delta <= TWO_HOURS:
+      status_emoji = '🔥 '
+    elif delta >= TWO_DAYS:
+      status_emoji = '❄️ '
+
     # Add title
-    message = '<b>{title}</b> (Score: {score}+ {ago})\n\n'.format(ago=ago, **story)
+    message = '<b>{title}</b> ({status_emoji}Score: {score}+ {ago})\n\n'.format(
+        ago=ago, status_emoji=status_emoji, **story)
 
     # Add link
     message += '<b>Link:</b> {}\n'.format(short_url)
@@ -107,8 +121,8 @@ class StoryPost(ndb.Model):
     if result and result.get('ok'):
       telegram_message_id = result.get('result').get('message_id')
     post = cls(id=story_id, title=story.get('title'), url=story.get('url'),
-        score=story.get('score'), text=story.get('text'),
-        short_url=short_url, short_hn_url=short_hn_url,
-        message=message, telegram_message_id=telegram_message_id)
+               score=story.get('score'), text=story.get('text'),
+               short_url=short_url, short_hn_url=short_hn_url,
+               message=message, telegram_message_id=telegram_message_id)
     post.put()
     post.add_memcache()

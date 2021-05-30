@@ -11,7 +11,7 @@ from google.appengine.api import memcache
 from helper import development
 from apis.telegram import send_message
 
-TWO_HOURS = datetime.timedelta(hours=2)
+FOUR_HOURS = datetime.timedelta(hours=4)
 TWO_DAYS = datetime.timedelta(days=2)
 
 class StoryPost(ndb.Model):
@@ -84,7 +84,7 @@ class StoryPost(ndb.Model):
     # or add ❄️ if it took it more than 2 days
     status_emoji = ''
     delta = now - published
-    if delta <= TWO_HOURS:
+    if delta <= FOUR_HOURS:
       status_emoji = '🔥 '
     elif delta >= TWO_DAYS:
       status_emoji = '❄️ '

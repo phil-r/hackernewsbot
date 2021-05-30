@@ -7,7 +7,7 @@ Bot runs on [Google App Engine](https://cloud.google.com/appengine/)
 ## Hacker News API
 Bot uses [Hacker News API](https://github.com/HackerNews/API)
 
-It loads [top stories](https://hacker-news.firebaseio.com/v0/topstories.json) every 10 minutes and posts any story that reached *100+* score
+It loads [top stories](https://hacker-news.firebaseio.com/v0/topstories.json) every 10 minutes and posts any story that reached *100+* score([adjusted for inflation](https://instruments.digital/inflation-adjusted-hn/))
 
 ## Telegram API
 Bot uses [Telegram Bot API](https://core.telegram.org/bots/api) to post messages to the [telegram channel](https://telegram.me/hacker_news_feed) with [sendMessage](https://core.telegram.org/bots/api#sendmessage) request

@@ -11,6 +11,7 @@ from database import StoryPost
 
 app = Flask(__name__)
 
+SCORE_TARGET = 150 # based on score inflation (see https://instruments.digital/inflation-adjusted-hn/)
 
 @app.route('/s/<short_id>')
 def story_redirect(short_id):
@@ -45,7 +46,7 @@ def task(stories):
     try:
       result = rpc.get_result()
       story = json.loads(result.content)
-      if story and story.get('score') >= 100:
+      if story and story.get('score') >= SCORE_TARGET:
         StoryPost.add(story)
       elif story and story.get('score'):
         # api returned a comment once (issue with id 21447853)

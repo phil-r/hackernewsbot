@@ -2,4 +2,4 @@
 # in `lib/` subdirectory.
 
 Flask==1.1.1
-timeago==1.0.10
+timeago==1.0.16

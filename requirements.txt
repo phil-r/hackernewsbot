@@ -1,5 +1,5 @@
 # Run 'pip install -r requirements.txt -t lib/' to install these dependencies
 # in `lib/` subdirectory.
 
-Flask==1.1.1
+Flask==2.3.1
 timeago==1.0.10

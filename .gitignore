@@ -1,5 +1,12 @@
-*.pyc
 .DS_Store
-lib
+.user/
+node_modules/
+.env
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.pyc
+lib/
 app.yaml
 setup.cfg

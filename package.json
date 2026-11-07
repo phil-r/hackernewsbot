@@ -1,0 +1,24 @@
+{
+  "name": "hackernewsbot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.4",
+  "engines": {
+    "bun": "1.4.4"
+  },
+  "scripts": {
+    "dev": "bun --no-env-file --watch src/index.ts",
+    "start": "bun --no-env-file src/index.ts",
+    "cron": "bun --no-env-file src/cron.ts",
+    "db:init": "bun --no-env-file scripts/init-db.ts",
+    "test": "bun --no-env-file test",
+    "check": "bun --no-env-file check --no-script"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.4"
+  },
+  "dependencies": {
+    "entities": "9.0.0"
+  }
+}

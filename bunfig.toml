@@ -1,0 +1,5 @@
+# Disable env loading in the script runner; --no-env-file also protects child invocations.
+env = false
+
+[test]
+preload = ["./tests/offline.ts"]

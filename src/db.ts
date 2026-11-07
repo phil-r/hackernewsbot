@@ -4,15 +4,16 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const root = fileURLToPath(new URL("..", import.meta.url));
-// Shared by initialization and startup validation; IDs also deduplicate confirmed posts.
+// Shared by initialization and startup validation; row existence deduplicates history.
+// Legacy exports may omit these four text fields. NULL means unknown, not invented data.
 export const schema = `CREATE TABLE story_posts (
   id INTEGER PRIMARY KEY,
   title TEXT NOT NULL,
   text TEXT,
-  message TEXT NOT NULL,
-  url TEXT NOT NULL,
-  short_url TEXT NOT NULL,
-  short_hn_url TEXT NOT NULL,
+  message TEXT,
+  url TEXT,
+  short_url TEXT,
+  short_hn_url TEXT,
   score INTEGER NOT NULL,
   telegram_message_id INTEGER,
   created TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -62,9 +63,16 @@ export function openDatabase(): Database {
   }
 }
 
+// Historical rows are already processed even without a URL or Telegram message ID.
+export function hasStory(db: Database, id: number): boolean {
+  return db.query<{ id: number }, [number]>(
+    "SELECT id FROM story_posts WHERE id = ?",
+  ).get(id) !== null;
+}
+
 export function findUrl(db: Database, id: number): string | null {
   return (
-    db.query<{ url: string }, [number]>("SELECT url FROM story_posts WHERE id = ?")
+    db.query<{ url: string | null }, [number]>("SELECT url FROM story_posts WHERE id = ?")
       .get(id)?.url ?? null
   );
 }

@@ -1,6 +1,6 @@
 import "./environment";
 import type { Database } from "bun:sqlite";
-import { findUrl, openDatabase } from "./db";
+import { hasStory, openDatabase } from "./db";
 import { formatPost, type Story } from "./story";
 
 const HN_API_URL = "https://hacker-news.firebaseio.com/v0";
@@ -38,7 +38,7 @@ export async function runCron(
   // Sequential requests keep both API traffic and posting concurrency bounded.
   for (const id of new Set<number>(ids)) {
     try {
-      if (findUrl(db, id)) continue;
+      if (hasStory(db, id)) continue;
       const story: Story | null = await json(
         `${HN_API_URL}/item/${id}.json`,
       );

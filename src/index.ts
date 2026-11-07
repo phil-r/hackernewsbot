@@ -14,6 +14,7 @@ export function startServer() {
   try {
     const server = Bun.serve({
       port,
+      hostname: process.env.HOST ?? "0.0.0.0",
       fetch: (request) => handleRequest(request, db),
     });
     return { server, db };

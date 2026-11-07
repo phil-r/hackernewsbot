@@ -131,6 +131,28 @@ test("startup validates SQLite before listening and closes it if listener startu
   } finally { open.mockRestore(); serve.mockRestore(); db.close(); }
 });
 
+test("HTTP binding defaults to all interfaces and supports isolated loopback", () => {
+  const oldHost = process.env.HOST;
+  const db = memoryDb();
+  const open = spyOn(persistence, "openDatabase").mockImplementation(() => db);
+  const hosts: unknown[] = [];
+  const serve = spyOn(Bun, "serve").mockImplementation((options: any) => {
+    hosts.push(options.hostname);
+    return {} as any;
+  });
+  try {
+    delete process.env.HOST;
+    startServer();
+    process.env.HOST = "127.0.0.1";
+    startServer();
+    expect(hosts).toEqual(["0.0.0.0", "127.0.0.1"]);
+  } finally {
+    if (oldHost === undefined) delete process.env.HOST;
+    else process.env.HOST = oldHost;
+    open.mockRestore(); serve.mockRestore(); db.close();
+  }
+});
+
 test("importing entrypoints neither listens nor fetches nor opens a database", () => {
   const index = new URL("../src/index.ts", import.meta.url).href;
   const cron = new URL("../src/cron.ts", import.meta.url).href;

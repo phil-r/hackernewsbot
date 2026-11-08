@@ -110,9 +110,9 @@ test("production builds minify CSS without deleting unrelated files", async () =
   await build({ production: true, outdir, origin: "https://readhacker.news" });
   const css = (await Bun.file(join(outdir, "index.html")).text()).split("<style>")[1]!.split("</style>")[0]!;
   expect(css.length).toBeLessThan(developmentCSS.length);
-  expect(css).toContain("1500px");
-  expect(css).toContain("1023px");
-  expect(css).toContain("500px");
+  expect(css).toContain("columns:23rem");
+  expect(css).toContain("any-pointer:coarse");
+  expect(css).toContain("overflow-wrap:anywhere");
   expect(css).toContain(".logo:hover");
   expect(await Bun.file(join(outdir, "bundle.js")).text()).toBe("stale webpack output");
 });

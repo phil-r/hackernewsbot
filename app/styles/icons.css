@@ -1,13 +1,21 @@
 .icon {
   width: 18px;
   height: 18px;
-  transform: translateY(6px);
 }
 
 .icon-link {
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
   width: 28px;
   height: 28px;
+  text-decoration: none;
+}
+
+@media (any-pointer: coarse) {
+  .icon-link {
+    width: 44px;
+    height: 44px;
+  }
 }

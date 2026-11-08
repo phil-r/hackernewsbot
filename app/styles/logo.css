@@ -7,7 +7,24 @@
   margin: 40px auto;
   display: block;
   transition: border-radius 0.4s ease-in-out;
-  &:hover {
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .logo:hover {
     border-radius: 75px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo {
+    transition: none;
+  }
+}
+
+@media (max-width: 40rem), (max-height: 32rem) {
+  .logo {
+    width: 110px;
+    height: 110px;
+    margin: 24px auto 16px;
   }
 }

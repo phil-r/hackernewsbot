@@ -60,10 +60,10 @@ ${datasetLicense}
     `<meta name="twitter:card" content="summary">` +
     `<meta name="twitter:title" content="${Bun.escapeHTML(title)}">` +
     `<meta name="twitter:description" content="${Bun.escapeHTML(description)}">` +
-    `<style>${css}</style></head><body>${logo}` +
+    `<style>${css}</style></head><body><a class="skip-link link" href="#directory">Skip to directory</a>${logo}` +
     `<header class="message"><h1>Read Hacker News</h1>` +
     `<p>Explore Hacker News readers, apps, RSS feeds, newsletters, and command-line clients.</p></header>` +
-    `<main class="columns" aria-label="Hacker News directory">${groups}</main>` +
+    `<main id="directory" class="columns" tabindex="-1" aria-label="Hacker News directory">${groups}</main>` +
     `<footer>Created by <a class="link" target="_blank" href="https://rukin.me">Phil Rukin</a> <br>` +
     `<a class="link" target="_blank" href="https://github.com/phil-r/awesome-hacker-news">Contribute directory entries</a> · ` +
     `<a class="link" href="https://github.com/phil-r/hackernewsbot">Website source</a>` +

@@ -37,7 +37,7 @@ test("generated site is delivered through the production handler with exact GET/
     expect(html).toContain('<meta name="twitter:card" content="summary">');
     expect(html).not.toContain("og:image");
     expect(html).not.toContain("twitter:image");
-    expect(html).toContain('<main class="columns"');
+    expect(html).toContain('<main id="directory" class="columns"');
     expect(html.match(/<h1>/g)).toHaveLength(1);
     expect(html).toContain('https://github.com/phil-r/hackernewsbot');
     expect(html).toContain('https://github.com/phil-r/awesome-hacker-news');

@@ -1,13 +1,13 @@
-
 .link {
   display: inline-block;
+  max-width: 100%;
   padding: 4px 1px;
   text-decoration: none;
   color: var(--color-link);
   border-bottom: 2px solid currentColor;
   font-size: inherit;
-  max-width: 100%;
   box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
 
 a:hover,
@@ -20,7 +20,30 @@ a:focus-visible {
   color: var(--color-link-active);
 }
 
-a:focus-visible {
+a:focus-visible,
+[tabindex="-1"]:focus-visible {
   outline: 2px solid #a74712;
   outline-offset: 3px;
+}
+
+/* Touch laptops need the same targets as phones, regardless of viewport width. */
+@media (any-pointer: coarse) {
+  .link {
+    min-width: 44px;
+    min-height: 44px;
+    padding-block: 9px;
+  }
+}
+
+.skip-link {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: white;
+  padding: 10px;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
 }

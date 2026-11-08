@@ -17,7 +17,7 @@ test("preserves the document, content order and trusted inline assets", async ()
   expect(html).toContain("<style>a > b { color: red; }</style>");
   expect(html).toContain(await Bun.file(new URL("../app/images/logo.svg", import.meta.url)).text());
   expect(html).toContain('<header class="message"><h1>Read Hacker News</h1><p>Explore Hacker News readers, apps, RSS feeds, newsletters, and command-line clients.</p></header>');
-  expect(html).toContain('<main class="columns" aria-label="Hacker News directory"><div class="columns-panel"><div class="columns-panel-content"><h2>Readers</h2><ul>');
+  expect(html).toContain('<main id="directory" class="columns" tabindex="-1" aria-label="Hacker News directory"><div class="columns-panel"><div class="columns-panel-content"><h2>Readers</h2><ul>');
   expect(html.indexOf(">First</a>")).toBeLessThan(html.indexOf(">Second</a>"));
   expect(html).toContain('href="https://rukin.me">Phil Rukin</a>');
   expect(html).toContain('href="https://github.com/phil-r/awesome-hacker-news">Contribute directory entries</a>');

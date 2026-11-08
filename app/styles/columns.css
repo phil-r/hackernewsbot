@@ -1,6 +1,8 @@
 .columns {
-  column-count: 4;
+  columns: 23rem;
   column-gap: 0;
+  max-width: 96rem;
+  margin-inline: auto;
 }
 
 .columns-panel {
@@ -11,22 +13,5 @@
 .columns-panel-content {
   padding: 10px;
   background-color: var(--color-panel);
-}
-
-@media (max-width: 1500px) {
-  .columns {
-    column-count: 3;
-  }
-}
-
-@media (max-width: 1023px) {
-  .columns {
-    column-count: 2;
-  }
-}
-
-@media (max-width: 500px) {
-  .columns {
-    column-count: 1;
-  }
+  overflow-wrap: anywhere;
 }

@@ -37,3 +37,18 @@ test("broken entries fail rather than disappearing or falling back to text", asy
   await expect(render({ name: "Missing" } as Source)).rejects.toThrow("Missing dataset URL or text reference");
   await expect(render({ name: "Broken", url: undefined, textReference: "fallback" } as unknown as Source)).rejects.toThrow();
 });
+
+test("keeps section headings and keyboard skip navigation without a category menu", async () => {
+  const sources = [
+    { name: 'Web & <readers>', items: [{ name: 'Reader', url: 'https://example.com' }] },
+    { name: 'Web & <readers>', items: [] },
+  ];
+  const html = await renderPage("", sources);
+  expect(html).toContain('<a class="skip-link link" href="#directory">Skip to directory</a>');
+  expect(html).toContain('<main id="directory" class="columns" tabindex="-1"');
+  expect(html).not.toContain('<nav');
+  expect(html).not.toContain('href="#category-');
+  expect(html.match(/<h2>Web &amp; &lt;readers&gt;<\/h2>/g)).toHaveLength(2);
+  expect(html).toContain('target="_blank" href="https://example.com"');
+  expect(html).not.toContain('<script');
+});

@@ -16,8 +16,13 @@ a:focus-visible {
 }
 
 .link:hover,
-.link:focus-visible {
+.link:focus-visible,
+.link:active {
   color: var(--color-link-active);
+}
+
+a:active {
+  background-color: var(--color-highlight);
 }
 
 a:focus-visible,

@@ -59,12 +59,6 @@ channel such as `@hacker_news_feed_st`.
 Run `bun run dev`, `bun run test` for offline tests, and
 `bun run check` for typechecking.
 
-## See also
-
-- [awesome-hacker-news](https://github.com/phil-r/awesome-hacker-news)
-- [designernewsbot](https://github.com/phil-r/designernewsbot)
-- [asciifacesbot](https://github.com/phil-r/asciifacesbot)
-
 ## Read Hacker News directory
 
 Site source lives in `app/` and builds into `static/`, served by the bot's HTTP server.
@@ -77,3 +71,9 @@ bun run build:prod  # build static/ before starting the HTTP server
 For a different domain, set `SITE_ORIGIN` when building:
 `SITE_ORIGIN=https://directory.example bun run build:prod`. It sets the site's
 canonical URL and is separate from the bot's `BASE_URL`; builds do not read `.env`.
+
+## See also
+
+- [awesome-hacker-news](https://github.com/phil-r/awesome-hacker-news)
+- [designernewsbot](https://github.com/phil-r/designernewsbot)
+- [asciifacesbot](https://github.com/phil-r/asciifacesbot)

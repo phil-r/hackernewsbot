@@ -10,7 +10,7 @@
 
 .columns-panel-content {
   padding: 10px;
-  background-color: rgb(249, 249, 249);
+  background-color: var(--color-panel);
 }
 
 @media (max-width: 1500px) {

@@ -4,6 +4,19 @@
 @import 'columns.css';
 @import 'icons.css';
 
+:root {
+  --color-link: #f07530;
+  --color-heading: #222;
+  --color-panel: #fff8f2;
+  --color-highlight: #ffe7d6;
+  --color-link-active: #e85d04;
+}
+
+::selection {
+  background: var(--color-highlight);
+  color: var(--color-heading);
+}
+
 body {
   font-family: Helvetica, Arial, Roboto, sans-serif;
   background: white;
@@ -19,6 +32,7 @@ h1 {
 }
 
 h2 {
+  color: var(--color-heading);
   font-size: 20px;
   font-weight: 500;
   margin: 0 0 16px;

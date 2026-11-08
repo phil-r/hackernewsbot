@@ -3,10 +3,20 @@
   display: inline-block;
   padding: 4px 1px;
   text-decoration: none;
-  color: #F07530;
-  border-bottom: 2px solid #F07530;
+  color: var(--color-link);
+  border-bottom: 2px solid currentColor;
   font-size: 16px;
   box-sizing: border-box;
+}
+
+a:hover,
+a:focus-visible {
+  background-color: var(--color-highlight);
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--color-link-active);
 }
 
 a:focus-visible {

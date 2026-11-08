@@ -5,7 +5,8 @@
   text-decoration: none;
   color: var(--color-link);
   border-bottom: 2px solid currentColor;
-  font-size: 16px;
+  font-size: inherit;
+  max-width: 100%;
   box-sizing: border-box;
 }
 

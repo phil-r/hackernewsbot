@@ -13,3 +13,6 @@ setup.cfg
 
 # Generated site: run bun run build before start/deployment.
 /static/
+
+# Local design-review snapshots.
+/.impeccable/critique/

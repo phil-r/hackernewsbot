@@ -3,12 +3,8 @@ import { findUrl } from "./db";
 import { decode } from "./shortener";
 import { HN_ITEM_URL } from "./story";
 
-// Exact allowlist: never turn an arbitrary URL path into a filesystem path.
-const files: Record<string, string> = {
-  "/": "index.html",
-  "/favicon.ico": "favicon.ico",
-  "/robots.txt": "robots.txt",
-};
+import { staticResponse } from "./static";
+
 // Keep legacy paths and raw IDs listener-free; Bun route params would percent-decode IDs.
 export function handleRequest(request: Request, db: Database): Response {
   const path = new URL(request.url).pathname;
@@ -17,10 +13,8 @@ export function handleRequest(request: Request, db: Database): Response {
       status: 405,
       headers: { Allow: "GET, HEAD" },
     });
-  if (Object.hasOwn(files, path))
-    return new Response(
-      Bun.file(new URL(`../static/${files[path]}`, import.meta.url)),
-    );
+  const asset = staticResponse(request);
+  if (asset) return asset;
   const match = /^\/(s|c)\/([^/]+)$/.exec(path);
   if (!match)
     return new Response("Sorry, Nothing at this URL.", { status: 404 });

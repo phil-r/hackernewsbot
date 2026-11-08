@@ -8,17 +8,22 @@
     "bun": "1.4.4"
   },
   "scripts": {
-    "dev": "bun --no-env-file --watch src/index.ts",
+    "dev": "bun run build && bun --no-env-file --watch src/index.ts",
     "start": "bun --no-env-file src/index.ts",
     "cron": "bun --no-env-file src/cron.ts",
     "db:init": "bun --no-env-file scripts/init-db.ts",
-    "test": "bun --no-env-file test",
-    "check": "bun --no-env-file check --no-script"
+    "test": "bun run build && bun --no-env-file test",
+    "check": "bun --no-env-file check --no-script",
+    "build": "bun --no-env-file scripts/build.ts",
+    "build:prod": "bun --no-env-file scripts/build.ts --production",
+    "site:dev": "bun --no-env-file scripts/dev.ts --serve"
   },
   "devDependencies": {
-    "@types/bun": "1.4.4"
+    "@types/bun": "1.4.4",
+    "awesome-hacker-news": "^1.0.12"
   },
   "dependencies": {
     "entities": "9.0.0"
-  }
+  },
+  "license": "MIT"
 }

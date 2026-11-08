@@ -1,0 +1,32 @@
+.columns {
+  column-count: 4;
+  column-gap: 0;
+}
+
+.columns-panel {
+  break-inside: avoid;
+  padding: 5px;
+}
+
+.columns-panel-content {
+  padding: 10px;
+  background-color: rgb(249, 249, 249);
+}
+
+@media (max-width: 1500px) {
+  .columns {
+    column-count: 3;
+  }
+}
+
+@media (max-width: 1023px) {
+  .columns {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 500px) {
+  .columns {
+    column-count: 1;
+  }
+}

@@ -1,0 +1,13 @@
+.icon {
+  width: 18px;
+  height: 18px;
+  transform: translateY(6px);
+}
+
+.icon-link {
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+}

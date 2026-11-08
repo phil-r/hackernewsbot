@@ -1,3 +1,4 @@
+import "./local-fetch";
 import { mock } from "bun:test";
 
 // Tests must never use real credentials or reach external services.

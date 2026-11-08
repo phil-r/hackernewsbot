@@ -9,6 +9,7 @@
       },
       "devDependencies": {
         "@types/bun": "1.4.4",
+        "awesome-hacker-news": "^1.0.12",
       },
     },
   },
@@ -16,6 +17,8 @@
     "@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
     "@types/node": ["@types/node@26.6.6", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-MzQj+8Kx3XI40OmUAE6Qoh58ZMNstNNMwn2nfd3qWsfe7nDNSqJNzes4njhz6AHwrSHOffSLwXU6yb474Q4aog=="],
+
+    "awesome-hacker-news": ["awesome-hacker-news@1.0.12", "", {}, "sha512-5g9WwlmACTYSeRO1hDjRTZnEVtC/FHObP+8hCoMOGypJZciCVQAtJU8oqmBRW0To+AeB6bNgctoq2IZ11TLwWw=="],
 
     "bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
 

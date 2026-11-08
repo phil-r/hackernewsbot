@@ -10,3 +10,6 @@ node_modules/
 lib/
 app.yaml
 setup.cfg
+
+# Generated site: run bun run build before start/deployment.
+/static/

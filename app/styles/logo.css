@@ -1,0 +1,13 @@
+
+.logo {
+  width: 150px;
+  height: 150px;
+  border: solid #F07530 10px;
+  box-sizing: border-box;
+  margin: 40px auto;
+  display: block;
+  transition: border-radius 0.4s ease-in-out;
+  &:hover {
+    border-radius: 75px;
+  }
+}

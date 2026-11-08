@@ -1,0 +1,15 @@
+
+.link {
+  display: inline-block;
+  padding: 4px 1px;
+  text-decoration: none;
+  color: #a74712;
+  border-bottom: 2px solid #F07530;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+a:focus-visible {
+  outline: 2px solid #a74712;
+  outline-offset: 3px;
+}

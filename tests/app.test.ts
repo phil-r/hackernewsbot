@@ -156,6 +156,7 @@ test("HTTP starts with history only while sender requires pending schema", async
     process.env.PORT = "8080";
     expect(() => openDatabase()).toThrow("Incompatible database schema");
     started = startServer();
+    expect(() => started!.db.exec("DELETE FROM story_posts")).toThrow("readonly");
     const response = await started.server.fetch(
       new Request(`http://127.0.0.1:${started.server.port}/s/${encode(story.id)}`),
     );

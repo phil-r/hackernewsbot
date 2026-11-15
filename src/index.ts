@@ -10,7 +10,7 @@ export function parsePort(value = "8080"): number {
 // Return both resources to the owner; a failed listener must not leak the database.
 export function startServer() {
   const port = parsePort(process.env.PORT);
-  const db = openDatabase(false); // HTTP needs history only; validate before listening.
+  const db = openDatabase({ requirePending: false, readonly: true }); // HTTP needs history only; validate before listening.
   try {
     const server = Bun.serve({
       port,

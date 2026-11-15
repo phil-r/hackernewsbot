@@ -137,7 +137,7 @@ export async function executeCron(): Promise<void> {
   try {
     const config = cronConfig();
     stage = "db_open";
-    db = openDatabase(true, (error) => { log.counts.failures++; log.failure("db_close", error); });
+    db = openDatabase({}, (error) => { log.counts.failures++; log.failure("db_close", error); });
     stage = "hn_top";
     await processStories(db, config.token, config.chatId, config.baseUrl, log);
   } catch (error) {

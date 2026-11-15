@@ -5,7 +5,7 @@ let db: ReturnType<typeof openDatabase> | undefined;
 try {
   await import("../src/environment");
   // Validate existing history first; never create a missing database or history table.
-  const database = openDatabase(false);
+  const database = openDatabase({ requirePending: false });
   db = database;
   db.transaction(() => {
     const existing = database.query("SELECT name FROM sqlite_master WHERE name = 'pending_deliveries'").get();

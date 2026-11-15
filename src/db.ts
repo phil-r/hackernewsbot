@@ -45,17 +45,32 @@ export function databasePath(url = process.env.DATABASE_URL): string {
   return resolve(root, filename);
 }
 
-// Never create an empty production database implicitly: missing history can cause reposts.
-export function openDatabase(requirePending = true, onCleanupError?: (error: unknown) => void): Database {
+interface OpenDatabaseOptions {
+  /** Validate pending_deliveries as well as history. Defaults to true for posting. */
+  requirePending?: boolean;
+  /** Use SQLite readonly access. Defaults to false (writable posting). */
+  readonly?: boolean;
+}
+
+/**
+ * Open existing history only: creating an empty database could cause reposts.
+ * @param onCleanupError Reports a close failure during validation without replacing the original error.
+ */
+export function openDatabase(
+  { requirePending = true, readonly = false }: OpenDatabaseOptions = {},
+  onCleanupError?: (error: unknown) => void,
+): Database {
   const path = databasePath();
   if (!statSync(path).isFile())
     throw new AppError("DATABASE_FILE", "Database must be an existing file");
   const db = new Database(path, {
-    readwrite: true,
+    readonly,
+    readwrite: !readonly,
     create: false,
     strict: true,
   });
   try {
+    // Connection-local settings also work readonly; never set journal_mode at startup.
     db.exec("PRAGMA busy_timeout = 5000; PRAGMA synchronous = FULL");
     validateTable(db, "story_posts", schema);
     if (requirePending) validateTable(db, "pending_deliveries", pendingSchema);

@@ -257,7 +257,9 @@ permissionTest("readonly filesystem: absent WAL/SHM cannot cold-start in a nonwr
       chmodSync(dir, 0o500);
       let error: unknown;
       try { connect(true); } catch (caught) { error = caught; }
-      expect((error as { code?: string } | undefined)?.code).toBe("SQLITE_CANTOPEN");
+      // SQLite reports this denied bootstrap differently on macOS and Linux.
+      expect(["SQLITE_CANTOPEN", "SQLITE_READONLY_DIRECTORY"])
+        .toContain((error as { code?: string } | undefined)?.code ?? "");
     } finally {
       chmodSync(dir, 0o700);
       chmodSync(path, 0o600);

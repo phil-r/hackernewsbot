@@ -11,6 +11,8 @@
     "dev": "bun run build && bun --no-env-file --watch src/index.ts",
     "start": "bun --no-env-file src/index.ts",
     "cron": "bun --no-env-file src/cron.ts",
+    "db:migrate-deliveries": "bun --no-env-file scripts/migrate-deliveries.ts",
+    "deliveries": "bun --no-env-file scripts/deliveries.ts",
     "db:init": "bun --no-env-file scripts/init-db.ts",
     "test": "bun run build && bun --no-env-file test",
     "check": "bun --no-env-file check --no-script",

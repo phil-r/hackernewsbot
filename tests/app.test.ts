@@ -1,14 +1,14 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { Database } from "bun:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { schema, openDatabase, findUrl } from "../src/db";
+import { schema, pendingSchema, openDatabase, findUrl } from "../src/db";
 import { encode } from "../src/shortener";
 import { formatPost } from "../src/story";
 import { handleRequest } from "../src/http";
 import { runCron, cronConfig } from "../src/cron";
-import { parsePort } from "../src/index";
+import { parsePort, startServer } from "../src/index";
 
 // Restore the offline guard after each stub; use only disposable in-memory databases.
 const originalFetch = globalThis.fetch;
@@ -26,6 +26,7 @@ const story = {
 function memoryDb() {
   const db = new Database(":memory:");
   db.exec(schema);
+  db.exec(pendingSchema);
   return db;
 }
 
@@ -116,18 +117,58 @@ test("cron filters, deduplicates and only saves confirmed deliveries", async () 
     }
     throw new Error("Unexpected network request");
   }) as typeof fetch;
-  await expect(
-    runCron(db, "fake", "@test", "https://readhacker.news"),
-  ).rejects.toThrow();
+  await runCron(db, "fake", "@test", "https://readhacker.news");
   expect(findUrl(db, 4)).toBeNull();
   fail = false;
   await runCron(db, "fake", "@test", "https://readhacker.news");
-  expect(findUrl(db, 4)).toBe(story.url);
-  expect(db.query("SELECT title FROM story_posts WHERE id = 4").get()).toEqual({ title: "Try /teamwork" });
+  expect(findUrl(db, 4)).toBeNull();
+  expect(db.query("SELECT id FROM pending_deliveries").all()).toEqual([{ id: 4 }]);
+  const pending = db.query<{ post_json: string }, []>("SELECT post_json FROM pending_deliveries WHERE id = 4").get();
+  expect(JSON.parse(pending!.post_json).title).toBe("Try /teamwork");
   await runCron(db, "fake", "@test", "https://readhacker.news");
-  expect(telegramCalls).toBe(2);
-  expect(seen.filter((url) => url.endsWith("/item/4.json"))).toHaveLength(2);
+  expect(telegramCalls).toBe(1);
+  expect(seen.filter((url) => url.endsWith("/item/4.json"))).toHaveLength(1);
   db.close();
+});
+
+test("HTTP starts with history only while sender requires pending schema", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "hnbot-http-"));
+  const old = { ...process.env };
+  const nativeServe = Bun.serve;
+  // Let the OS choose an isolated listener port without changing PORT validation.
+  const serve = spyOn(Bun, "serve").mockImplementation((options) => {
+    Object.assign(options, { port: 0 });
+    return nativeServe(options);
+  });
+  let started: ReturnType<typeof startServer> | undefined;
+  try {
+    const path = join(dir, "history.sqlite");
+    const history = new Database(path, { create: true });
+    try {
+      history.exec(schema);
+      history.query("INSERT INTO story_posts (id,title,url,score) VALUES (?,?,?,?)")
+        .run(story.id, story.title, story.url, story.score);
+    } finally {
+      history.close();
+    }
+    process.env.DATABASE_URL = `file:${path}`;
+    process.env.HOST = "127.0.0.1";
+    process.env.PORT = "8080";
+    expect(() => openDatabase()).toThrow("Incompatible database schema");
+    started = startServer();
+    const response = await started.server.fetch(
+      new Request(`http://127.0.0.1:${started.server.port}/s/${encode(story.id)}`),
+    );
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(story.url);
+    expect(() => openDatabase()).toThrow("Incompatible database schema");
+  } finally {
+    await started?.server.stop(true);
+    started?.db.close();
+    serve.mockRestore();
+    process.env = old;
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("requires initialized database and valid configuration", () => {
@@ -138,6 +179,8 @@ test("requires initialized database and valid configuration", () => {
     expect(() => openDatabase()).toThrow();
     const db = new Database(join(dir, "data.sqlite"), { create: true });
     db.exec(schema);
+    expect(() => openDatabase()).toThrow("Incompatible database schema");
+    db.exec(pendingSchema);
     db.close();
     const opened = openDatabase();
     opened.close();

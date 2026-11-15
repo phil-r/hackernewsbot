@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { AppError } from "./logging";
 import { statSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,10 +20,20 @@ export const schema = `CREATE TABLE story_posts (
   created TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 )`;
 
+// Intents have no expiry: a crashed sender may already have delivered the message.
+export const pendingSchema = `CREATE TABLE pending_deliveries (
+  id INTEGER PRIMARY KEY,
+  post_json TEXT NOT NULL,
+  chat_id TEXT NOT NULL,
+  telegram_message_id INTEGER,
+  diagnostic TEXT NOT NULL DEFAULT 'intent',
+  created TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
+
 // Treat file: as a filename, not a URI; relative paths are rooted at the project.
 export function databasePath(url = process.env.DATABASE_URL): string {
   if (!url?.startsWith("file:"))
-    throw new Error("DATABASE_URL must be a file: filename");
+    throw new AppError("CONFIG_DATABASE", "DATABASE_URL must be a file: filename");
   const filename = url.slice(5);
   if (
     !filename ||
@@ -30,37 +41,39 @@ export function databasePath(url = process.env.DATABASE_URL): string {
     /[?#\0%]/.test(filename) ||
     filename.startsWith("//")
   )
-    throw new Error("Unsupported DATABASE_URL");
+    throw new AppError("CONFIG_DATABASE", "Unsupported DATABASE_URL");
   return resolve(root, filename);
 }
 
 // Never create an empty production database implicitly: missing history can cause reposts.
-export function openDatabase(): Database {
+export function openDatabase(requirePending = true, onCleanupError?: (error: unknown) => void): Database {
   const path = databasePath();
   if (!statSync(path).isFile())
-    throw new Error("Database must be an existing file");
+    throw new AppError("DATABASE_FILE", "Database must be an existing file");
   const db = new Database(path, {
     readwrite: true,
     create: false,
     strict: true,
   });
   try {
-    db.exec("PRAGMA busy_timeout = 5000");
-    const definition = db
-      .query(
-        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'story_posts'",
-      )
-      .get() as { sql: string } | null;
-    // Ignore SQL presentation only; reject schema drift before serving or posting.
-    const canonical = (sql: string) =>
-      sql.replace(/[\s"`\[\];]/g, "").toUpperCase();
-    if (!definition || canonical(definition.sql) !== canonical(schema))
-      throw new Error("Incompatible database schema");
+    db.exec("PRAGMA busy_timeout = 5000; PRAGMA synchronous = FULL");
+    validateTable(db, "story_posts", schema);
+    if (requirePending) validateTable(db, "pending_deliveries", pendingSchema);
     return db;
   } catch (error) {
-    db.close();
+    try { db.close(); } catch (cleanupError) { onCleanupError?.(cleanupError); }
     throw error;
   }
+}
+
+export function validateTable(db: Database, name: string, expected: string): void {
+  const definition = db.query<{ sql: string }, [string]>(
+    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+  ).get(name);
+  // Ignore SQL presentation only; reject schema drift before serving or posting.
+  const canonical = (sql: string) => sql.replace(/[\s"`\[\];]/g, "").toUpperCase();
+  if (!definition || canonical(definition.sql) !== canonical(expected))
+    throw new AppError("DATABASE_SCHEMA", "Incompatible database schema");
 }
 
 // Historical rows are already processed even without a URL or Telegram message ID.

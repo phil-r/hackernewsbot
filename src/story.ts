@@ -36,6 +36,24 @@ function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;");
 }
 
+// This is prose URL recognition, not URL validation. Quotes delimit URLs except
+// apostrophes between word characters (e.g. ?q=O'Reilly).
+const urlCharacter = /(?:[^\s<>"'“”‘’`]|(?<=[\p{L}\p{N}\p{M}_])['’](?=[\p{L}\p{N}\p{M}_]))/u.source;
+const bareHost = /(?:[\p{L}\p{N}](?:[\p{L}\p{N}\p{M}-]*[\p{L}\p{N}\p{M}])?\.)+[\p{L}\p{N}\p{M}]+|\[[0-9a-f:.]*:[0-9a-f:.]+\]/u.source;
+const titleToken = new RegExp(
+  String.raw`\b(?:[a-z][a-z0-9+.-]*:\/\/|www\.)${urlCharacter}+|(?<![\p{L}\p{N}_])(?:${bareHost})(?::\d+)?[/?#]${urlCharacter}*|(?<![\w/])\/(?=[a-z0-9_])`,
+  "giu",
+);
+
+function telegramTitle(title: string): string {
+  // HTML escaping does not stop bot-command detection; break /word invisibly, not URLs.
+  const text = decodeHTML(title).replace(
+    titleToken,
+    (match) => match === "/" ? "/\u200B" : match,
+  );
+  return escapeHtml(text);
+}
+
 // HN bodies contain HTML: keep Telegram-supported markup, unlike plain-text titles.
 function storyText(text: string): string {
   return text
@@ -94,7 +112,7 @@ export function formatPost(
   // Hot and cold markers include the exact age boundaries.
   const status =
     elapsed <= HOT_AGE_MS ? "🔥 " : elapsed >= COLD_AGE_MS ? "❄️ " : "";
-  let message = `<b>${escapeHtml(decodeHTML(story.title))}</b> (${status}Score: ${story.score}+ ${ago})\n\n<b>Link:</b> ${shortUrl}\n`;
+  let message = `<b>${telegramTitle(story.title)}</b> (${status}Score: ${story.score}+ ${ago})\n\n<b>Link:</b> ${shortUrl}\n`;
   const buttons: Post["buttons"] = [];
   if (story.url) {
     message += `<b>Comments:</b> ${shortHnUrl}\n`;

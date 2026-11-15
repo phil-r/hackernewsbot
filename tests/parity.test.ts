@@ -97,15 +97,60 @@ test("intentional HTML safety differences: escape title, strip unsupported tags 
   expect(post.message).toBe('<b>A &amp; B &lt; C &gt; D</b> (🔥 Score: 150+ just now)\n\n<b>Link:</b> https://readhacker.news/c/4c9fp\n\nx\n<i>yes</i> <a href="https://example.com">link</a>\n');
 });
 
+test("title commands are inert without changing readable text, source, or links", () => {
+  for (const [title, expected] of [
+    ["/teamwork", "/\u200Bteamwork"],
+    ["Try /teamwork and (/start@some_bot), /a_1!", "Try /\u200Bteamwork and (/\u200Bstart@some_bot), /\u200Ba_1!"],
+    ["&#47;teamwork &amp; &#x2f;help &lt;tag&gt;", "/\u200Bteamwork &amp; /\u200Bhelp &lt;tag&gt;"],
+    ["https://example.com/teamwork?q=/start & www.example.com/help", "https://example.com/teamwork?q=/start &amp; www.example.com/help"],
+    ["example.com/?next=/teamwork", "example.com/?next=/teamwork"],
+    ["example.com#/teamwork /help", "example.com#/teamwork /\u200Bhelp"],
+    ["/start example.com?next=/teamwork /help", "/\u200Bstart example.com?next=/teamwork /\u200Bhelp"],
+    ["/start sub.example-site.co.uk:8080/path?q=/help#/teamwork /end", "/\u200Bstart sub.example-site.co.uk:8080/path?q=/help#/teamwork /\u200Bend"],
+    ["https://example.com/?next=/teamwork#/help /start www.example.com?next=/teamwork#/help /end", "https://example.com/?next=/teamwork#/help /\u200Bstart www.example.com?next=/teamwork#/help /\u200Bend"],
+    ['Read "https://example.com"—/teamwork', 'Read "https://example.com"—/\u200Bteamwork'],
+    ["Read 'https://example.com/?next=/login#/help'—/teamwork", "Read 'https://example.com/?next=/login#/help'—/\u200Bteamwork"],
+    ["Read “www.example.com?next=/login#/help”—/teamwork", "Read “www.example.com?next=/login#/help”—/\u200Bteamwork"],
+    ["Read ‘example.com/?next=/login#/help’—/teamwork", "Read ‘example.com/?next=/login#/help’—/\u200Bteamwork"],
+    ["Read `https://example.com?next=/login#/help`—/teamwork", "Read `https://example.com?next=/login#/help`—/\u200Bteamwork"],
+    ["Read &quot;https://example.com?next=/login#/help&quot;—/teamwork", 'Read "https://example.com?next=/login#/help"—/\u200Bteamwork'],
+    ["https://example.com/?q=O'Reilly&next=/help", "https://example.com/?q=O'Reilly&amp;next=/help"],
+    ["Read 'https://example.com/?q=O'Reilly&next=/help'—/teamwork", "Read 'https://example.com/?q=O'Reilly&amp;next=/help'—/\u200Bteamwork"],
+    ["Read ‘example.com/?q=O’Reilly&next=/help’—/teamwork", "Read ‘example.com/?q=O’Reilly&amp;next=/help’—/\u200Bteamwork"],
+    ["[2001:db8::1]/?next=/login", "[2001:db8::1]/?next=/login"],
+    ["/start [2001:db8::1]:8080/?next=/login /end", "/\u200Bstart [2001:db8::1]:8080/?next=/login /\u200Bend"],
+    ['Read "[2001:db8::1]:443/?next=/login"—/teamwork', 'Read "[2001:db8::1]:443/?next=/login"—/\u200Bteamwork'],
+    ["192.168.1.1/?next=/login", "192.168.1.1/?next=/login"],
+    ["例子.中国/?next=/help", "例子.中国/?next=/help"],
+    ["/start 192.168.1.1:8080/path?next=/login#/help /end", "/\u200Bstart 192.168.1.1:8080/path?next=/login#/help /\u200Bend"],
+    ["/start 例子.中国?next=/login#/help /end", "/\u200Bstart 例子.中国?next=/login#/help /\u200Bend"],
+    ['"192.168.1.1#/?next=/login"—/help', '"192.168.1.1#/?next=/login"—/\u200Bhelp'],
+    ['"例子.中国/#/help"—/start', '"例子.中国/#/help"—/\u200Bstart'],
+    ["https://例子.中国/?next=/help https://192.168.1.1/?next=/login /end", "https://例子.中国/?next=/help https://192.168.1.1/?next=/login /\u200Bend"],
+    ["Café 🚀 and/or / 2026", "Café 🚀 and/or / 2026"],
+  ] as const) {
+    const source = { ...story, title, url: "https://example.com/teamwork" };
+    const post = formatPost(source, base, story.time * 1000);
+    const normal = formatPost({ ...source, title: story.title }, base, story.time * 1000);
+    expect(post.message).toBe(normal.message.replace(`<b>${story.title}</b>`, `<b>${expected}</b>`));
+    expect(post.title).toBe(title);
+    expect(source.title).toBe(title);
+    expect(post.url).toBe(source.url);
+    expect(post.buttons).toEqual(normal.buttons);
+    expect(post.shortUrl).toBe(normal.shortUrl);
+    expect(post.shortHnUrl).toBe(normal.shortHnUrl);
+  }
+});
+
 test("title entities decode once before Telegram escaping, without changing stored source", () => {
   for (const [title, expected] of [
     ["Don&#x27;t panic – AT&amp;T", "Don't panic – AT&amp;T"],
     ["Don&#39;t &#X27; &#38; &#x26; &#128640; &#x1F680;", "Don't ' &amp; &amp; 🚀 🚀"],
     ["&quot;quoted&quot; &apos; &copy; &eacute; &mdash;", '"quoted" \' © é —'],
-    ["&lt;b&gt;not bold&lt;/b&gt; &#60;i&#62;not italic&#60;/i&#62;", "&lt;b&gt;not bold&lt;/b&gt; &lt;i&gt;not italic&lt;/i&gt;"],
+    ["&lt;b&gt;not bold&lt;/b&gt; &#60;i&#62;not italic&#60;/i&#62;", "&lt;b&gt;not bold&lt;/\u200Bb&gt; &lt;i&gt;not italic&lt;/\u200Bi&gt;"],
     ["&amp;lt;b&amp;gt; &amp;#x27; &amp;amp;", "&amp;lt;b&amp;gt; &amp;#x27; &amp;amp;"],
     ["&#x110000; &#xD800; &#0; &#xZZ; &unknown;", "� � � &amp;#xZZ; &amp;unknown;"],
-    ["Don't panic – Café 🚀 AT&T <b>literal</b> >", "Don't panic – Café 🚀 AT&amp;T &lt;b&gt;literal&lt;/b&gt; &gt;"],
+    ["Don't panic – Café 🚀 AT&T <b>literal</b> >", "Don't panic – Café 🚀 AT&amp;T &lt;b&gt;literal&lt;/\u200Bb&gt; &gt;"],
   ] as const) {
     const source = { ...story, title };
     const post = formatPost(source, base, story.time * 1000);

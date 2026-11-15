@@ -100,12 +100,14 @@ test("cron filters, deduplicates and only saves confirmed deliveries", async () 
     if (url.endsWith("/item/2.json"))
       return Response.json({ ...story, id: 2, score: undefined });
     if (url.endsWith("/item/3.json")) return Response.json(null);
-    if (url.endsWith("/item/4.json")) return Response.json({ ...story, id: 4 });
+    if (url.endsWith("/item/4.json"))
+      return Response.json({ ...story, id: 4, title: "Try /teamwork" });
     if (url.includes("api.telegram.org")) {
       telegramCalls++;
       const body = JSON.parse(String(init?.body));
       expect(body.chat_id).toBe("@test");
       expect(body.parse_mode).toBe("HTML");
+      expect(body.text).toContain("<b>Try /\u200Bteamwork</b>");
       expect(body.disable_notification).toBe(true);
       expect(body.reply_markup.inline_keyboard[0]).toHaveLength(2);
       return Response.json(
@@ -121,6 +123,7 @@ test("cron filters, deduplicates and only saves confirmed deliveries", async () 
   fail = false;
   await runCron(db, "fake", "@test", "https://readhacker.news");
   expect(findUrl(db, 4)).toBe(story.url);
+  expect(db.query("SELECT title FROM story_posts WHERE id = 4").get()).toEqual({ title: "Try /teamwork" });
   await runCron(db, "fake", "@test", "https://readhacker.news");
   expect(telegramCalls).toBe(2);
   expect(seen.filter((url) => url.endsWith("/item/4.json"))).toHaveLength(2);

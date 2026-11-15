@@ -91,7 +91,7 @@ const telegramFailures = [
 ];
 
 for (const { name, fail, code } of telegramFailures) {
-  test(`Telegram ${name} quarantines the intent and lets the next story post`, async () => {
+  test(`Telegram ${name} quarantines the intent without trying the next story`, async () => {
     const db = memoryDb();
     let telegramCalls = 0;
     const log = spyOn(console, "error").mockImplementation(() => {});
@@ -112,7 +112,8 @@ for (const { name, fail, code } of telegramFailures) {
       await runCron(db, "fake", "@test", "https://x");
 
       expect(persistence.findUrl(db, 1)).toBeNull();
-      expect(persistence.findUrl(db, 2)).toBe("https://news.ycombinator.com/item?id=2");
+      expect(persistence.findUrl(db, 2)).toBeNull();
+      expect(telegramCalls).toBe(1);
       // A failed response does not prove Telegram did not send it: never retry automatically.
       expect(db.query("SELECT id, telegram_message_id FROM pending_deliveries").all())
         .toEqual([{ id: 1, telegram_message_id: null }]);
@@ -128,7 +129,7 @@ for (const { name, fail, code } of telegramFailures) {
   });
 }
 
-test("149 is skipped, 150 and 151 post; all columns survive reopening and suppress item fetch/send", async () => {
+test("149 is skipped, 150 and 151 post in separate invocations; all columns survive reopening and suppress item fetch/send", async () => {
   const dir = mkdtempSync(join(tmpdir(), "hnbot-parity-"));
   const path = join(dir, "posts.sqlite");
   let db = new Database(path);
@@ -150,7 +151,8 @@ test("149 is skipped, 150 and 151 post; all columns survive reopening and suppre
   try {
     await runCron(db, "fake", "@test", "https://x");
 
-    expect(db.query("SELECT id FROM story_posts ORDER BY id").all()).toEqual([{ id: 2 }, { id: 3 }]);
+    expect(db.query("SELECT id FROM story_posts ORDER BY id").all()).toEqual([{ id: 2 }]);
+    expect(requests.some(url => url.endsWith("/item/3.json"))).toBe(false);
     const row = db.query("SELECT * FROM story_posts WHERE id=2").get() as Record<string, unknown>;
     expect(row).toEqual({ id: 2, title: "Test", text: item.text, score: 150,
       message: expect.stringContaining("\noriginal\ntext\n"), url: "https://news.ycombinator.com/item?id=2",
@@ -160,6 +162,9 @@ test("149 is skipped, 150 and 151 post; all columns survive reopening and suppre
     requests.length = 0;
     await runCron(db, "fake", "@test", "https://x");
 
+    expect(db.query("SELECT id FROM story_posts ORDER BY id").all()).toEqual([{ id: 2 }, { id: 3 }]);
+    requests.length = 0;
+    await runCron(db, "fake", "@test", "https://x");
     expect(requests).toEqual(["https://hacker-news.firebaseio.com/v0/topstories.json", "https://hacker-news.firebaseio.com/v0/item/1.json"]);
 
   } finally {

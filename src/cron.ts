@@ -73,9 +73,10 @@ async function processStories(db: Database, token: string, chatId: string, baseU
         log.failure(stage, error, id);
         continue;
       }
+      // Stop at this candidate, even if another run claims it or delivery fails.
       // No network side effect until the exact post and destination commit.
       stage = "claim";
-      if (!claimDelivery(db, post, chatId)) { log.counts.skipped++; continue; }
+      if (!claimDelivery(db, post, chatId)) { log.counts.skipped++; break; }
       let messageId: number;
       try {
         const response = await json(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -87,15 +88,16 @@ async function processStories(db: Database, token: string, chatId: string, baseU
       } catch (error) {
         // Even explicit rejections require operator review; never retry automatically.
         quarantine(db, log, "telegram_send", error, id);
-        continue;
+        break;
       }
       // Sent counts confirmed Telegram sends, even if local reconciliation is needed.
       log.counts.sent++;
       log.sent(id, messageId);
       try { rememberDelivery(db, id, messageId); }
-      catch (error) { quarantine(db, log, "remember", error, id, messageId); continue; }
+      catch (error) { quarantine(db, log, "remember", error, id, messageId); break; }
       try { finalizeDelivery(db, id); }
       catch (error) { quarantine(db, log, "finalize", error, id, messageId); }
+      break;
     }
   } catch (error) {
     log.counts.failures++;
@@ -105,7 +107,7 @@ async function processStories(db: Database, token: string, chatId: string, baseU
   if (itemFailures) throw new AppError("STORY_FAILURES", `${itemFailures} stories failed`);
 }
 
-/** One scheduled pass. Pre-send failures reject; quarantines do not block unrelated stories. */
+/** One scheduled pass selects at most one eligible story in HN rank order. */
 export async function runCron(db: Database, token: string, chatId: string, baseUrl: string): Promise<void> {
   const log = runLog();
   let failed = true;

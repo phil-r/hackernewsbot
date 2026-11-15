@@ -36,7 +36,8 @@ test("ambiguous send quarantines only that story across reopen and absence from 
   try {
     await runCron(db, "secret-token", "@test", "https://x");
     expect(persistence.hasStory(db, 1)).toBe(false);
-    expect(persistence.hasStory(db, 2)).toBe(true);
+    expect(persistence.hasStory(db, 2)).toBe(false);
+    expect(sends).toBe(1);
     db.close();
     db = new Database(path);
     ids = [];
@@ -79,6 +80,51 @@ function stubStories(onSend: () => Response | Promise<Response>, ids = [1, 2]) {
   }) as typeof fetch;
 }
 
+test("each invocation uses fresh HN rank, skipping history, pending, and low scores without a cooldown", async () => {
+  const db = memoryDb();
+  db.exec("INSERT INTO story_posts (id, title, score) VALUES (5, 'posted', 150)");
+  claimDelivery(db, formatPost({ ...story, id: 6 }, "https://x"), "@test");
+  let ids = [5, 6, 7, 30, 10];
+  const fetched: number[] = [];
+  let sends = 0;
+  globalThis.fetch = (async (input: string | URL | Request) => {
+    const url = String(input);
+    if (url.endsWith("topstories.json")) return Response.json(ids);
+    const match = /\/item\/(\d+)\.json$/.exec(url);
+    if (match) {
+      const id = Number(match[1]);
+      fetched.push(id);
+      return Response.json({ ...story, id, score: id === 7 ? 149 : id === 10 ? 500 : 150 });
+    }
+    sends++;
+    return Response.json({ ok: true, result: { message_id: sends } });
+  }) as typeof fetch;
+
+  try {
+    await runCron(db, "fake", "@test", "https://x");
+    expect(fetched).toEqual([7, 30]);
+    expect(sends).toBe(1);
+    expect(persistence.hasStory(db, 30)).toBe(true);
+    expect(persistence.hasStory(db, 10)).toBe(false);
+
+    // No elapsed-time gate or saved queue: the next invocation reads the new rank.
+    ids = [20, 10, 30];
+    fetched.length = 0;
+    await runCron(db, "fake", "@test", "https://x");
+    expect(fetched).toEqual([20]);
+    expect(sends).toBe(2);
+    expect(persistence.hasStory(db, 20)).toBe(true);
+
+    ids = [5, 6, 7, 30, 20];
+    await runCron(db, "fake", "@test", "https://x");
+    ids = [];
+    await runCron(db, "fake", "@test", "https://x");
+    expect(sends).toBe(2);
+  } finally {
+    db.close();
+  }
+});
+
 test("intent write failure is fatal and causes zero sends", async () => {
   const db = memoryDb();
   let sends = 0;
@@ -111,7 +157,8 @@ test("history insert failure retains the confirmed intent and allows operator fi
     await runCron(db, "fake", "@test", "https://x");
 
     expect(persistence.hasStory(db, 1)).toBe(false);
-    expect(persistence.hasStory(db, 2)).toBe(true);
+    expect(persistence.hasStory(db, 2)).toBe(false);
+    expect(sends).toBe(1);
     expect(db.query("SELECT telegram_message_id FROM pending_deliveries WHERE id = 1").get())
       .toEqual({ telegram_message_id: 101 });
     const failures = log.mock.calls.map(([line]) => JSON.parse(String(line))).filter(e => e.event === "failure");
@@ -148,7 +195,8 @@ test("intent deletion failure rolls back history and retains the confirmed inten
     await runCron(db, "fake", "@test", "https://x");
 
     expect(persistence.hasStory(db, 1)).toBe(false);
-    expect(persistence.hasStory(db, 2)).toBe(true);
+    expect(persistence.hasStory(db, 2)).toBe(false);
+    expect(sends).toBe(1);
     expect(db.query("SELECT telegram_message_id FROM pending_deliveries WHERE id = 1").get())
       .toEqual({ telegram_message_id: 101 });
     const failures = log.mock.calls.map(([line]) => JSON.parse(String(line))).filter(e => e.event === "failure");
@@ -185,7 +233,8 @@ test("message-ID write failure keeps the intent without automatically resending"
     await runCron(db, "fake", "@test", "https://x");
 
     expect(persistence.hasStory(db, 1)).toBe(false);
-    expect(persistence.hasStory(db, 2)).toBe(true);
+    expect(persistence.hasStory(db, 2)).toBe(false);
+    expect(sends).toBe(1);
     expect(db.query("SELECT telegram_message_id FROM pending_deliveries WHERE id = 1").get())
       .toEqual({ telegram_message_id: null });
     const failures = log.mock.calls.map(([line]) => JSON.parse(String(line))).filter(e => e.event === "failure");
@@ -209,13 +258,12 @@ test("message-ID write failure keeps the intent without automatically resending"
 });
 
 for (const recheck of ["pending", "finalized history"]) {
-  test(`overlapping runs recheck ${recheck} at claim and send once`, async () => {
+  test(`overlapping runs recheck ${recheck} at claim without falling back to another candidate`, async () => {
     const dir = mkdtempSync(join(tmpdir(), "hnbot-claims-"));
     const path = join(dir, "posts.sqlite");
     const first = new Database(path);
     first.exec(persistence.schema);
     first.exec(persistence.pendingSchema);
-    first.exec("INSERT INTO story_posts (id, title, score) VALUES (2, 'legacy', 150)");
     const second = new Database(path);
     let sends = 0;
     const items = [Promise.withResolvers<Response>(), Promise.withResolvers<Response>()];
@@ -256,7 +304,7 @@ for (const recheck of ["pending", "finalized history"]) {
       expect(sends).toBe(1);
       expect(second.query("SELECT * FROM pending_deliveries").all()).toEqual([]);
       expect(second.query("SELECT telegram_message_id FROM story_posts WHERE id = 1").get()).toEqual({ telegram_message_id: 99 });
-      expect(second.query("SELECT telegram_message_id FROM story_posts WHERE id = 2").get()).toEqual({ telegram_message_id: null });
+      expect(second.query("SELECT telegram_message_id FROM story_posts WHERE id = 2").get()).toBeNull();
     } finally {
       reply.resolve();
       first.close();

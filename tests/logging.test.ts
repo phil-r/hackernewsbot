@@ -116,7 +116,8 @@ for (const { name, respond, expected } of sendFailures) {
       await runCron(db, canary, canary, "https://example.test");
 
       expect(persistence.findUrl(db, 1)).toBeNull();
-      expect(persistence.findUrl(db, 2)).toBe("https://news.ycombinator.com/item?id=2");
+      expect(persistence.findUrl(db, 2)).toBeNull();
+      expect(sends).toBe(1);
       // A failed response does not prove Telegram did not send it: never retry automatically.
       expect(db.query("SELECT id, telegram_message_id FROM pending_deliveries").all())
         .toEqual([{ id: 1, telegram_message_id: null }]);
@@ -124,7 +125,7 @@ for (const { name, respond, expected } of sendFailures) {
       const failures = events.filter(e => e.event === "failure");
       expect(failures).toEqual([expect.objectContaining({ stage: "telegram_send", story_id: 1, ...expected })]);
       const failure = failures[0];
-      expect(events.at(-1)).toMatchObject({ event: "run_end", sent: 1, quarantined: 1, skipped: 0, failures: 1, duration_ms: expect.any(Number) });
+      expect(events.at(-1)).toMatchObject({ event: "run_end", sent: 0, quarantined: 1, skipped: 0, failures: 1, duration_ms: expect.any(Number) });
       expect(new Set(events.map(e => e.run_id)).size).toBe(1);
       const row = db.query("SELECT diagnostic FROM pending_deliveries WHERE id=1").get() as { diagnostic: string };
       expect(JSON.parse(row.diagnostic)).toEqual(failure);
@@ -136,7 +137,7 @@ for (const { name, respond, expected } of sendFailures) {
   });
 }
 
-test("diagnostic write failure reports separately, preserves intent, and continues", async () => {
+test("diagnostic write failure reports separately, preserves intent, and stops", async () => {
   const db = memoryDb();
   db.exec("CREATE TRIGGER fail_diagnostic BEFORE UPDATE OF diagnostic ON pending_deliveries WHEN NEW.id=1 BEGIN SELECT RAISE(ABORT, 'CANARY-token-chat-url-title-body'); END");
   const log = spyOn(console, "error").mockImplementation(() => {});
@@ -148,10 +149,10 @@ test("diagnostic write failure reports separately, preserves intent, and continu
     await runCron(db, canary, canary, "https://example.test");
     const events = log.mock.calls.map(([line]) => JSON.parse(String(line)));
 
-    expect(events.filter(e => e.event === "failure").map(e => e.stage)).toEqual(["telegram_send", "diagnostic_update", "telegram_send"]);
+    expect(events.filter(e => e.event === "failure").map(e => e.stage)).toEqual(["telegram_send", "diagnostic_update"]);
     expect(db.query("SELECT diagnostic FROM pending_deliveries WHERE id=1").get()).toEqual({ diagnostic: "intent" });
     // A diagnostic-write error adds an event, not a second story failure.
-    expect(events.at(-1)).toMatchObject({ quarantined: 2, failures: 2 });
+    expect(events.at(-1)).toMatchObject({ quarantined: 1, failures: 1 });
     expect(JSON.stringify(events)).not.toContain(canary);
   } finally {
     log.mockRestore();
@@ -433,7 +434,7 @@ test("quarantined stories are skipped on the next run, with fresh run IDs and ac
     await runCron(db, canary, canary, "https://example.test");
     const events = log.mock.calls.map(([line]) => JSON.parse(String(line)));
     const ends = events.filter(e => e.event === "run_end");
-    expect(ends[0]).toMatchObject({ quarantined: 1, skipped: 1, failures: 1, sent: 0 });
+    expect(ends[0]).toMatchObject({ quarantined: 1, skipped: 0, failures: 1, sent: 0 });
     expect(ends[1]).toMatchObject({ quarantined: 0, skipped: 2, failures: 0, sent: 0 });
     expect(ends[0].run_id).not.toBe(ends[1].run_id);
     expect(sends).toBe(1);

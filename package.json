@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "bun@1.4.4",
+  "packageManager": "bun@1.4.5",
   "engines": {
-    "bun": "1.4.4"
+    "bun": "1.4.5"
   },
   "scripts": {
     "dev": "bun run build && bun --no-env-file --watch src/index.ts",
@@ -21,7 +21,7 @@
     "site:dev": "bun --no-env-file scripts/dev.ts --serve"
   },
   "devDependencies": {
-    "@types/bun": "1.4.4",
+    "@types/bun": "1.4.5",
     "awesome-hacker-news": "^1.0.14"
   },
   "dependencies": {

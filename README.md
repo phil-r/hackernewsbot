@@ -33,7 +33,7 @@ Uses an internal shortener at `readhacker.news`.
 
 ## How to run your own `hackernewsbot`
 
-- Install Bun 1.4.4, clone this project, and run
+- Install Bun 1.4.5, clone this project, and run
   `bun install --frozen-lockfile`.
 - Register a bot with [BotFather](https://telegram.me/BotFather)
   and make it an administrator of your channel.
